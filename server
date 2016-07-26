@@ -1,0 +1,39 @@
+#lang racket
+
+(define accept-socket
+  (lambda (listener)
+    (begin
+      (define-values (in out) (tcp-accept listener))
+      (newline)
+      (write "New connection received"))))
+
+(define start-webserver
+  (lambda (porta)
+    (begin
+      (write "Scheme WebServer is listening...")
+      (define accept-socket (tcp-listen porta 5 #t))
+      (define (loop)
+        (accept-and-handle accept-socket)
+        (loop))
+      (define t (thread loop))
+      (lambda ()
+        (kill-thread t)
+        (tcp-close accept-socket)))))
+
+(define (accept-and-handle listener)
+  (define-values (in out) (tcp-accept listener))
+  (thread
+   (lambda ()
+     (handle in out)
+     (close-input-port in)
+     (close-output-port out))))
+
+(define (handle in out)
+  ; Discard the request header (up to blank line):
+  (regexp-match #rx"(\r\n|^)\r\n" in)
+  ; Send reply:
+  (display "HTTP/1.0 200 Okay\r\n" out)
+  (display "Server: k\r\nContent-Type: text/html\r\n\r\n" out)
+  (display "<html><body>Agora sim</body></html>" out))
+
+(start-webserver 8080)
