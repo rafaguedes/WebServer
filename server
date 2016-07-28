@@ -31,10 +31,15 @@
 (define (handle in out)
   (define url
     (read-line in))
-  (define file
+  (define url-splitted
     (list-ref (string-split url) 1))
-  (if(file-exists? (full-path file))
-     (status-ok out (full-path file))
+  (define file
+    (lambda (url-splitted)
+    (if(string=? url-splitted "/")
+       "/index.html"
+       url-splitted)))
+  (if(file-exists? (full-path (file url-splitted)))
+     (status-ok out (full-path (file url-splitted)))
      (status-not-found out)))
 
 (define full-path
