@@ -29,8 +29,45 @@
      (close-output-port out))))
 
 (define (handle in out)
-  (display "HTTP/1.0 200 Okay\r\n" out)
-  (display "Server: k\r\nContent-Type: text/html\r\n\r\n" out)
-  (display "<html><body>Agora sim</body></html>" out))
+  (define url
+    (read-line in))
+  (define file
+    (list-ref (string-split url) 1))
+  (if(file-exists? (full-path file))
+     (status-ok out (full-path file))
+     (status-not-found out)))
+
+(define full-path
+  (lambda (file)
+    (string->path
+     (string-append "/home/rafael/Desktop/GitHub/WebServer/files" file))))
+
+(define status-ok
+  (lambda (out file-path)
+    (write "OK")
+    (newline)
+    (display "HTTP/1.0 200 Okay\r\n" out)
+    (display "Server: k\r\nContent-Type: text/html\r\n\r\n" out)
+    (display (file-content file-path) out)))
+
+(define status-not-found
+  (lambda (out)
+    (write "Error: Page not found!")
+    (newline)
+    (display "HTTP/1.0 404 Not Found\r\n" out)
+    (display "Server: k\r\nContent-Type: text/html\r\n\r\n" out)
+    (display "<html><body>Page not found</body></html>" out)))
+
+(define file-content
+  (lambda(file-path)
+    (apply string (file->char_list file-path))))
+
+(define (file->char_list path)
+ (call-with-input-file path
+   (lambda (input-port)
+     (let loop ((x (read-char input-port)))
+       (cond 
+        ((eof-object? x) '())
+        (#t (begin (cons x (loop (read-char input-port))))))))))
 
 (start-webserver 8080)
