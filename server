@@ -33,13 +33,17 @@
     (read-line in))
   (define url-splitted
     (list-ref (string-split url) 1))
+  (define extension
+    (if(string=? url-splitted "/")
+       "html"
+       (list-ref (string-split url-splitted ".") 1)))
   (define file
     (lambda (url-splitted)
     (if(string=? url-splitted "/")
        "/index.html"
        url-splitted)))
   (if(file-exists? (full-path (file url-splitted)))
-     (status-ok out (full-path (file url-splitted)))
+     (status-ok out (full-path (file url-splitted)) extension)
      (status-not-found out)))
 
 (define full-path
@@ -48,19 +52,30 @@
      (string-append "/home/rafael/Desktop/GitHub/WebServer/files" file))))
 
 (define status-ok
-  (lambda (out file-path)
-    (write "OK")
+  (lambda (out file-path extension)
+    (define response-header
+      (set-content-type extension))
     (newline)
-    (display "HTTP/1.0 200 Okay\r\n" out)
-    (display "Server: k\r\nContent-Type: text/html\r\n\r\n" out)
-    (display (file-content file-path) out)))
+    (display "HTTP/1.1 200 Okay\r\n" out)
+    (display response-header out)
+    (cond ((string=? extension "html") (display (file-content file-path) out))
+          ((string=? extension "jpg") (display (to-byte file-path) out)))))
+
+(define to-byte
+  (lambda (file-path)
+    (string->bytes/utf-8 (file-content file-path))))
+
+(define set-content-type
+  (lambda (extension)
+    (cond ((string=? extension "html") "Server: Scheme WebServer\r\nContent-Type: text/html\r\n\r\n")
+          ((string=? extension "jpg") "Server: Scheme WebServer\r\nContent-Type: image/jpg\r\n\r\n"))))
 
 (define status-not-found
   (lambda (out)
     (write "Error: Page not found!")
     (newline)
-    (display "HTTP/1.0 404 Not Found\r\n" out)
-    (display "Server: k\r\nContent-Type: text/html\r\n\r\n" out)
+    (display "HTTP/1.1 404 Not Found\r\n" out)
+    (display "Server: Scheme WebServer\r\nContent-Type: text/html\r\n\r\n" out)
     (display "<html><body>Page not found</body></html>" out)))
 
 (define file-content
