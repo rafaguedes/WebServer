@@ -1,5 +1,8 @@
 #lang racket
 
+(require 2htdp/image)
+(require net/url net/uri-codec net/base64 json)
+
 (define accept-socket
   (lambda (listener)
     (begin
@@ -55,20 +58,27 @@
   (lambda (out file-path extension)
     (define response-header
       (set-content-type extension))
-    (newline)
-    (display "HTTP/1.1 200 Okay\r\n" out)
+    (display "HTTP/1.0 200 Okay\r\n" out)
     (display response-header out)
     (cond ((string=? extension "html") (display (file-content file-path) out))
-          ((string=? extension "jpg") (display (to-byte file-path) out)))))
+          ((string=? extension "jpg") (process-image (file-content file-path) out file-path))
+          ((string=? extension "png") (process-image (file-content file-path) out file-path))
+          ((string=? extension "gif") (process-image (file-content file-path) out file-path))
+          ((string=? extension "js") (display (file-content file-path) out))
+          ((string=? extension "css") (display (file-content file-path) out)))))
 
-(define to-byte
-  (lambda (file-path)
-    (string->bytes/utf-8 (file-content file-path))))
+(define process-image
+  (lambda (image out path)
+    (display (file->bytes path) out)))
 
 (define set-content-type
   (lambda (extension)
     (cond ((string=? extension "html") "Server: Scheme WebServer\r\nContent-Type: text/html\r\n\r\n")
-          ((string=? extension "jpg") "Server: Scheme WebServer\r\nContent-Type: image/jpg\r\n\r\n"))))
+          ((string=? extension "jpg") "Server: Scheme WebServer\r\nContent-Type: image/jpg\r\n\r\n")
+          ((string=? extension "png") "Server: Scheme WebServer\r\nContent-Type: image/png\r\n\r\n")
+          ((string=? extension "gif") "Server: Scheme WebServer\r\nContent-Type: image/gif\r\n\r\n")
+          ((string=? extension "js") "Server: Scheme WebServer\r\nContent-Type: text/html\r\n\r\n")
+          ((string=? extension "css") "Server: Scheme WebServer\r\nContent-Type: text/html\r\n\r\n"))))
 
 (define status-not-found
   (lambda (out)

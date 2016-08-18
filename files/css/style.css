@@ -1,0 +1,22 @@
+html
+{
+	background-color: #000;
+}
+
+#conteudo
+{
+    	color: #F00;
+	margin: 0 auto;
+	width: 700px;
+	text-align: center;
+	font-family: 'Lato', sans-serif;
+}
+
+#conteudo h1
+{
+	color: #FFF;
+	font-size: 67px;
+}
+
+
+
